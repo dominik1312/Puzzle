@@ -8,10 +8,13 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="btn"><span>Válassz egy képet</span><em></em></h1>
-        <input class="button"type="file" id="imageUpload" accept="image/*">
+        <h1 class="btn" onclick="document.getElementById('fileInput').click()">
+            <span>Válassz egy képet</span>
+            <em></em>
+        </h1>    
         <div id="puzzleContainer"></div>
     </div>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
     <script src="puzzle.js"></script>
 </body>
 </html>
