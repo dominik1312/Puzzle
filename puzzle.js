@@ -1,108 +1,163 @@
-document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+// puzzle.js
+document.getElementById('fileInput').addEventListener('change', handleImageUpload);
+
+let moveCount = 0;
 
 function handleImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.src = e.target.result;
-    img.onload = function() {
-      createPuzzle(img);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+            createPuzzle(img);
+        };
     };
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
 }
 
-function createPuzzle(image) 
-  const puzzleContainer = document.getElementById('puzzleContainer');
-  puzzleContainer.innerHTML = ''; // Clear any existing puzzle pieces
+function createPuzzle(image) {
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    puzzleContainer.innerHTML = ''; // Clear any existing puzzle pieces
+    moveCount = 0; // Reset move counter
+    updateMoveCounter(); // Update the counter display
 
-  const pieceWidth = image.width / 5; // Calculate piece width based on image size
-  const pieceHeight = image.height / 3; // Calculate piece height based on image size
+    const pieceWidth = 100;
+    const pieceHeight = 100;
 
-  let pieces = [];
-  for (let y = 0; y < 5; y++) {
-    for (let x = 0; x < 3; x++) {
-      const canvas = document.createElement('canvas');
-      canvas.width = pieceWidth;
-      canvas.height = pieceHeight;
-      const context = canvas.getContext('2d');
+    let pieces = [];
+    for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+            if (x === 3 && y === 3) break; // Leave one empty space
 
-      context.drawImage(
-        image,
-        x * pieceWidth, y * pieceHeight, pieceWidth, pieceHeight,
-        0, 0, pieceWidth, pieceHeight
-      );
+            const canvas = document.createElement('canvas');
+            canvas.width = pieceWidth;
+            canvas.height = pieceHeight;
+            const context = canvas.getContext('2d');
 
-      const piece = document.createElement('div');
-      piece.classList.add('puzzlePiece');
-      piece.style.backgroundImage = `url(${canvas.toDataURL()})`;
-      piece.dataset.position = `<span class="math-inline">\{x\}\-</span>{y}`;
+            context.drawImage(
+                image,
+                x * pieceWidth, y * pieceHeight, pieceWidth, pieceHeight,
+                0, 0, pieceWidth, pieceHeight
+            );
 
-      // Add a unique ID to each piece (1-15, excluding the empty space)
-      const pieceID = x + y * 5 + 1; // Calculate the ID for the piece
-      if (pieceID < 15) {
-        piece.setAttribute('id', `piece-${pieceID}`);
+            const piece = document.createElement('div');
+            piece.classList.add('puzzlePiece');
+            piece.style.backgroundImage = `url(${canvas.toDataURL()})`;
+            piece.style.backgroundPosition = `-${x * pieceWidth}px -${y * pieceHeight}px`;
+            piece.dataset.position = `${x}-${y}`;
+
+            pieces.push(piece);
+        }
+    }
+
+    shuffle(pieces);
+    pieces.forEach(piece => puzzleContainer.appendChild(piece));
+
+    // Add an empty space
+    const emptyPiece = document.createElement('div');
+    emptyPiece.classList.add('puzzlePiece');
+    emptyPiece.style.backgroundColor = '#f0f0f0';
+    puzzleContainer.appendChild(emptyPiece);
+
+    // Add event listeners for swapping pieces
+    puzzleContainer.addEventListener('click', swapPieces);
+}
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function swapPieces(event) {
+    const clickedPiece = event.target;
+    if (!clickedPiece.classList.contains('puzzlePiece')) return;
+
+    const emptyPiece = document.querySelector('#puzzleContainer .puzzlePiece:last-child');
+    const emptyIndex = Array.from(emptyPiece.parentElement.children).indexOf(emptyPiece);
+    const clickedIndex = Array.from(clickedPiece.parentElement.children).indexOf(clickedPiece);
+
+    const validMoves = [
+        emptyIndex - 1, emptyIndex + 1, // Left and Right
+        emptyIndex - 4, emptyIndex + 4  // Up and Down
+    ];
+
+    if (validMoves.includes(clickedIndex) &&
+        (clickedIndex === emptyIndex - 1 && emptyIndex % 4 !== 0 ||
+         clickedIndex === emptyIndex + 1 && (emptyIndex + 1) % 4 !== 0 ||
+         clickedIndex === emptyIndex - 4 || clickedIndex === emptyIndex + 4)) {
+        // Swap pieces
+        [clickedPiece.style.order, emptyPiece.style.order] = [emptyPiece.style.order, clickedPiece.style.order];
+        emptyPiece.parentElement.insertBefore(emptyPiece, clickedPiece.nextSibling);
+        moveCount++; // Increment move count
+        updateMoveCounter(); // Update the counter display
+    }
+}
+
+function updateMoveCounter() {
+    document.getElementById('moveCounter').textContent = `Mozgatások száma: ${moveCount}`;
+}
+window.onload = function () {
+  
+    var seconds = 00; 
+    var tens = 00; 
+    var appendTens = document.getElementById("tens")
+    var appendSeconds = document.getElementById("seconds")
+    var buttonStart = document.getElementById('button-start');
+    var buttonStop = document.getElementById('button-stop');
+    var buttonReset = document.getElementById('button-reset');
+    var Interval ;
+  
+    buttonStart.onclick = function() {
+      
+      clearInterval(Interval);
+       Interval = setInterval(startTimer, 10);
+    }
+    
+      buttonStop.onclick = function() {
+         clearInterval(Interval);
+    }
+    
+  
+    buttonReset.onclick = function() {
+       clearInterval(Interval);
+      tens = "00";
+        seconds = "00";
+      appendTens.innerHTML = tens;
+        appendSeconds.innerHTML = seconds;
+    }
+    
+     
+    
+    function startTimer () {
+      tens++; 
+      
+      if(tens <= 9){
+        appendTens.innerHTML = "0" + tens;
       }
-
-      pieces.push(piece);
+      
+      if (tens > 9){
+        appendTens.innerHTML = tens;
+        
+      } 
+      
+      if (tens > 99) {
+        console.log("seconds");
+        seconds++;
+        appendSeconds.innerHTML = "0" + seconds;
+        tens = 0;
+        appendTens.innerHTML = "0" + 0;
+      }
+      
+      if (seconds > 9){
+        appendSeconds.innerHTML = seconds;
+      }
+    
     }
-  }
-
-  shuffle(pieces);
-  pieces.forEach(piece => puzzleContainer.appendChild(piece));
-
-  // Add event listeners for dragging and dropping pieces
-  puzzleContainer.addEventListener('dragstart', handleDragStart);
-  puzzleContainer.addEventListener('dragover', handleDragOver);
-  puzzleContainer.addEventListener('drop', handleDrop);
-
-  // Add event listeners for moving pieces with mouse click and drag
-  puzzleContainer.addEventListener('mousedown', handleMouseDown);
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
-
-  // Function to handle drag start event
-  function handleDragStart(event) {
-    const draggedPiece = event.target;
-    if (!draggedPiece.classList.contains('puzzlePiece')) return;
-
-    draggedPiece.style.cursor = 'grab';
-    event.dataTransfer.setData('text/plain', draggedPiece.id);
-  }
-
-  // Function to handle drag over event
-  function handleDragOver(event) {
-    event.preventDefault();
-  }
-
-  // Function to handle drop event
-  function handleDrop(event) {
-    event.preventDefault();
-
-    const droppedPieceID = event.dataTransfer.getData('text/plain');
-    const droppedPiece = document.getElementById(droppedPieceID);
-    if (!droppedPiece) return;
-
-    const targetPosition = event.target.dataset.position;
-    const currentPosition = droppedPiece.dataset.position;
-
-    // Calculate the difference in positions
-    const dx = targetPosition.split('-')[0] - currentPosition.split('-')[0];
-    const dy = targetPosition.split('-')[1] - currentPosition.split('-')[1];
-
-    // Check if the move is valid (within the same row or column)
-    if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
-      // Swap positions of the pieces
-      const targetPiece = document.querySelector(`[data-position="${targetPosition}"]`);
-      targetPiece.dataset.position = currentPosition;
-      droppedPiece.dataset.position = targetPosition;
-
-      // Swap the pieces in the DOM
-      puzzleContainer.insertBefore(droppedPiece, targetPiece);
-    }
-
-    droppedPiece.style.cursor = 'default';
+    
+  
   }
